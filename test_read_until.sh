@@ -22,16 +22,37 @@ echo -n "Test 6: Whitespace Sequence "
 ./read_until "  " <<<"a b c  d" | diff -a - <(echo -n "a b c  ") && echo "PASS" || echo "FAIL"
 
 echo -n "Test 7: Special Character Sequence "
-./read_until "🌟" <<<"hello🌟world" | diff -a - <(echo -n "hello🌟") && echo "PASS" || echo "FAIL"
+./read_until "🌟" <<<$'hello🌟world' | diff -a - <(echo -n "hello🌟") && echo "PASS" || echo "FAIL"
 
 echo -n "Test 8: Random Data (fails randomly when a NULL byte is read) "
-(
-    dd if=/dev/urandom bs=32 count=1 2>/dev/null
-    echo "11111111"
-) | ./read_until '11111111' | wc -c | grep -q '40' && echo "PASS" || echo "FAIL"
+test_8() {
+    local f_in=$(mktemp)
+    local f_out=$(mktemp)
+    (
+        dd if=/dev/urandom bs=100000 count=1 2>/dev/null
+        echo "11111111"
+    ) >"$f_in"
+
+    ./read_until '11111111' <"$f_in" >"$f_out"
+    output_len=$(wc -c <"$f_out")
+    if [ "$output_len" -eq 100008 ]; then
+        return 0
+    else
+        echo "Output length is $output_len, expected 100008" >&2
+        which byte-insight >/dev/null && byte-insight <"$f_out" | tail -n16
+        return 1
+    fi
+}
+test_8 && echo "PASS" || echo "FAIL"
 
 echo -n "Test 9: Empty Sequence "
 ./read_until "" <<<"empty" | diff -a - <(echo -n "") && echo "PASS" || echo "FAIL"
 
 echo -n "Test 10: Long Sequence "
 ./read_until "long sequence" <<<"this is a long sequence test" | diff -a - <(echo -n "this is a long sequence") && echo "PASS" || echo "FAIL"
+
+echo "Test 11: Stress test 1 MB random data"
+time {
+    head -n1M /dev/urandom
+    echo "11111111"
+} | ./read_until '11111111' >/dev/null && echo "PASS" || echo "FAIL"

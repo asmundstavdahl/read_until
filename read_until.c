@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void shift_buffer_left(char *buf, size_t buffer_size);
+#define NULL_CHAR (0xFF + 1)
+
+void shift_buffer_left(short *buf, size_t buffer_size);
 
 /**
  * Reads input from stdin until a given sequence is found and prints the input up and including the sequence.
@@ -18,22 +20,28 @@ int main(int argc, char **argv)
         return 2;
     }
 
-    char *sequence = argv[1];
-    size_t sequence_len = strlen(sequence);
-    char *buf = calloc(sequence_len + 1, sizeof(char));
+    unsigned char *sequence = (unsigned char *)argv[1];
+    size_t sequence_len = strlen((char *)sequence);
+    short *buf = calloc(sequence_len + 1, sizeof(short));
 
     size_t buf_pos = 0;
     while (buf_pos < sequence_len)
     {
         if (buf[buf_pos] == '\0')
         {
-            char next_char = getc(stdin);
+            int next_char = getc(stdin);
+            short next_char_element = (short)next_char;
             if (next_char == EOF)
             {
                 return 1;
             }
-            buf[buf_pos] = next_char;
-            putc(next_char, stdout);
+            if (next_char == '\0')
+            {
+                next_char_element = NULL_CHAR;
+            }
+
+            buf[buf_pos] = next_char_element;
+            putc((unsigned char)next_char, stdout);
         }
 
         if (buf[buf_pos] == sequence[buf_pos])
@@ -54,11 +62,9 @@ int main(int argc, char **argv)
  * Shifts the elements of the buffer to the left by one position.
  *
  * @param buf Pointer to the buffer.
- * @param buffer_size The size of the buffer.
- *
- * @return None.
+ * @param buf_len The number of elements in the buffer.
  */
-void shift_buffer_left(char *buf, size_t buf_len)
+void shift_buffer_left(short *buf, size_t buf_len)
 {
     for (size_t i = 0; i < buf_len - 1; i++)
     {
