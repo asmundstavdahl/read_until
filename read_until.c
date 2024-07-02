@@ -27,17 +27,13 @@ int main(int argc, char **argv)
     }
 
     size_t buf_len = STACK_BUF_SIZE / sizeof(short);
-    short stack_buf[512];
+    short stack_buf[512] = {0};
     short *buf = stack_buf;
     if (seq_len * sizeof(short) > sizeof(stack_buf) * sizeof(short))
     {
         buf = (short *)calloc(seq_len, sizeof(short));
         buf_len = seq_len;
         fprintf(stderr, "Sequence is too long. Using heap buffer.\n");
-    }
-    else
-    {
-        memset(stack_buf, 0, sizeof(stack_buf));
     }
 
     unsigned char *seq = (unsigned char *)argv[1];
