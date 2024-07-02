@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #define NULL_CHAR (0xFF + 1)
-#define STACK_BUF_SIZE 1024
 
 /**
  * Reads input from stdin until a given sequence is found and prints the input up and including the sequence.
@@ -26,14 +25,14 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    size_t buf_len = STACK_BUF_SIZE / sizeof(short);
+    size_t buf_len = 512;
     short stack_buf[512] = {0};
     short *buf = stack_buf;
     if (seq_len * sizeof(short) > sizeof(stack_buf) * sizeof(short))
     {
+        // Sequence is too long. Using heap buffer.
         buf = (short *)calloc(seq_len, sizeof(short));
         buf_len = seq_len;
-        fprintf(stderr, "Sequence is too long. Using heap buffer.\n");
     }
 
     unsigned char *seq = (unsigned char *)argv[1];
@@ -58,11 +57,10 @@ int main(int argc, char **argv)
             }
 
             buf[IDX] = next_char_element;
-            putc((unsigned char)next_char, stdout);
+            putc(next_char, stdout);
             ready_chars++;
         }
 
-        // fprintf(stderr, "seq: %s\toffset: %lu\tbuf_pos: %lu\tIDX: %lu\tbuf(%c) == seq(%c)\n", argv[1], offset, pos, IDX, buf[IDX], seq[pos]);
         if (buf[IDX] == seq[pos])
         {
             pos++;
@@ -73,7 +71,6 @@ int main(int argc, char **argv)
             ready_chars += pos - 1;
             pos = 0;
             offset++;
-            // = (offset + 1) % seq_len;
         }
     }
 
