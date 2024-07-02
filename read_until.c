@@ -4,8 +4,7 @@
 #include <stdlib.h>
 
 #define NULL_CHAR (0xFF + 1)
-
-void shift_buffer_left(short *buf, size_t buffer_size);
+#define STACK_BUF_SIZE 1024
 
 /**
  * Reads input from stdin until a given sequence is found and prints the input up and including the sequence.
@@ -19,19 +18,37 @@ int main(int argc, char **argv)
         fprintf(stderr, "Usage: %s <sequence>\nIf sequence is empty, exits immediately without reading or writing anything.\n", argv[0]);
         return 2;
     }
+
+    size_t seq_len = strlen(argv[1]);
+
     if (strlen(argv[1]) == 0)
     {
         return 0;
     }
 
-    unsigned char *sequence = (unsigned char *)argv[1];
-    size_t sequence_len = strlen((char *)sequence);
-    short *buf = (short *)calloc(sequence_len + 1, sizeof(short));
-
-    size_t buf_pos = 0;
-    while (buf_pos < sequence_len)
+    size_t buf_len = STACK_BUF_SIZE / sizeof(short);
+    short stack_buf[512];
+    short *buf = stack_buf;
+    if (seq_len * sizeof(short) > sizeof(stack_buf) * sizeof(short))
     {
-        if (buf[buf_pos] == '\0')
+        buf = (short *)calloc(seq_len, sizeof(short));
+        buf_len = seq_len;
+        fprintf(stderr, "Sequence is too long. Using heap buffer.\n");
+    }
+    else
+    {
+        memset(stack_buf, 0, sizeof(stack_buf));
+    }
+
+    unsigned char *seq = (unsigned char *)argv[1];
+
+    size_t offset = 0;
+    size_t pos = 0;
+    size_t ready_chars = 0;
+#define IDX ((pos + offset) % buf_len)
+    while (pos < seq_len)
+    {
+        if (ready_chars == 0)
         {
             int next_char = getc(stdin);
             short next_char_element = (short)next_char;
@@ -44,34 +61,25 @@ int main(int argc, char **argv)
                 next_char_element = NULL_CHAR;
             }
 
-            buf[buf_pos] = next_char_element;
+            buf[IDX] = next_char_element;
             putc((unsigned char)next_char, stdout);
+            ready_chars++;
         }
 
-        if (buf[buf_pos] == sequence[buf_pos])
+        // fprintf(stderr, "seq: %s\toffset: %lu\tbuf_pos: %lu\tIDX: %lu\tbuf(%c) == seq(%c)\n", argv[1], offset, pos, IDX, buf[IDX], seq[pos]);
+        if (buf[IDX] == seq[pos])
         {
-            buf_pos++;
+            pos++;
+            ready_chars--;
         }
         else
         {
-            shift_buffer_left(buf, sequence_len + 1);
-            buf_pos = 0;
+            ready_chars += pos - 1;
+            pos = 0;
+            offset++;
+            // = (offset + 1) % seq_len;
         }
     }
 
     return 0;
-}
-
-/**
- * Shifts the elements of the buffer to the left by one position.
- *
- * @param buf Pointer to the buffer.
- * @param buf_len The number of elements in the buffer.
- */
-void shift_buffer_left(short *buf, size_t buf_len)
-{
-    for (size_t i = 0; i < buf_len - 1; i++)
-    {
-        buf[i] = buf[i + 1];
-    }
 }
