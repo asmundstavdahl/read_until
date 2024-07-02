@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     unsigned char *sequence = (unsigned char *)argv[1];
     size_t sequence_len = strlen((char *)sequence);
-    short *buf = calloc(sequence_len + 1, sizeof(short));
+    short *buf = (short *)calloc(sequence_len + 1, sizeof(short));
 
     size_t buf_pos = 0;
     while (buf_pos < sequence_len)
