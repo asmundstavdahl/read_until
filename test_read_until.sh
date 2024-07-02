@@ -51,8 +51,8 @@ echo -n "Test 9: Empty Sequence "
 echo -n "Test 10: Long Sequence "
 ./read_until "long sequence" <<<"this is a long sequence test" | diff -a - <(echo -n "this is a long sequence") && echo "PASS" || echo "FAIL"
 
-echo "Test 11: Stress test 1 MB random data"
+echo "Test 11: Stress test 10 MB random data"
 time {
-    head -n1M /dev/urandom
+    head -c10M /dev/urandom
     echo "11111111"
 } | ./read_until '11111111' >/dev/null && echo "PASS" || echo "FAIL"
