@@ -16,8 +16,12 @@ int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        fprintf(stderr, "Usage: %s <sequence>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <sequence>\nIf sequence is empty, exits immediately without reading or writing anything.\n", argv[0]);
         return 2;
+    }
+    if (strlen(argv[1]) == 0)
+    {
+        return 0;
     }
 
     unsigned char *sequence = (unsigned char *)argv[1];
